@@ -92,7 +92,8 @@ export function getDays ({year, month, value, rangeBegin, rangeEnd, returnSixRow
     month = _splitValue.month
   }
 
-  var firstDayOfMonth = new Date(year, month, 1).getDay()
+  // var firstDayOfMonth = new Date(year, month, 1).getDay()
+  var firstDayOfMonth = new Date(year, month, 1).getDay() - 1 >= 0 ? new Date(year, month, 1).getDay() - 1 : 6
   var lastDateOfMonth = new Date(year, month + 1, 0).getDate()
   var lastDayOfLastMonth = new Date(year, month, 0).getDate()
 
@@ -100,7 +101,8 @@ export function getDays ({year, month, value, rangeBegin, rangeEnd, returnSixRow
   var line = 0
   var temp = []
   for (i = 1; i <= lastDateOfMonth; i++) {
-    var dow = new Date(year, month, i).getDay()
+    // var dow = new Date(year, month, i).getDay()
+    var dow = new Date(year, month, i).getDay() - 1 >= 0 ? new Date(year, month, i).getDay() - 1 : 6
       // 第一行
     if (dow === 0) {
       temp[line] = []
@@ -203,8 +205,10 @@ export function getDays ({year, month, value, rangeBegin, rangeEnd, returnSixRow
       */
       line.map((item, index) => {
         item.date = item.day
-        item.weekDay = index
-        item.isWeekend = index === 0 || index === 6
+        // item.weekDay = index
+        // item.isWeekend = index === 0 || index === 6
+        item.weekDay = index + 1 > 6 ? 0 : index + 1
+        item.isWeekend = index === 5 || index === 6
         item.formatedDate = format(new Date(`${item.year}/${item.month_str}/${item.date}`), 'YYYY-MM-DD')
         return item
       })

@@ -30,13 +30,13 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(day,k1) in days">
+        <tr v-for="(day,k1) in days" @click="weekChoose ? selectAllWeek(k1, day) : null">
           <td
           v-for="(child,k2) in day"
           :data-date="formatDate(year, month, child)"
           :data-current="currentValue"
           :class="buildClass(k2, child)"
-          @click="select(k1, k2, child)">
+          @click="!weekChoose ? select(k1, k2, child) : null">
             <slot
             :year="year"
             :month="month"
@@ -139,12 +139,12 @@ export default {
           if (process.env.NODE_ENV === 'development') {
             console.warn('[VUX warn] 抱歉，inline-calendar 组件需要升级 vux-loader 到最新版本才能正常使用')
           }
-          return ['日', '一', '二', '三', '四', '五', '六']
+          return ['一', '二', '三', '四', '五', '六', '日']
         } else {
           if (V_LOCALE === 'en') { // eslint-disable-line
-            return ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+            return ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
           } else if (V_LOCALE === 'zh-CN') { // eslint-disable-line
-            return ['日', '一', '二', '三', '四', '五', '六']
+            return ['一', '二', '三', '四', '五', '六', '日']
           } else if (V_LOCALE === 'MULTI') { // eslint-disable-line
             return [0, 0, 0, 0, 0, 0, 0]
           }
@@ -160,7 +160,10 @@ export default {
     },
     currentYearMonth () {
       return this.year + this.month
-    }
+    },
+    weekChoose () {
+      return this.chooseType === 'week';
+    },
   },
   watch: {
     value (val) {
@@ -222,7 +225,7 @@ export default {
         lastCurrentMonthDate: days[days.length - 1].formatedDate,
         allDates: this.days
       }, this.viewChangeEventCount)
-    }
+    },
   },
   methods: {
     processDateItem (item) {
@@ -294,9 +297,9 @@ export default {
     },
     buildClass (index, child) {
       let isCurrent = false
-      if (!child.isLastMonth && !child.isNextMonth) {
+      if (!child.isLastMonth && !child.isNextMonth || this.weekChoose) {
         if (this.multi && this.currentValue.length > 0) {
-          isCurrent = this.currentValue.indexOf(this.formatDate(this.year, this.month, child)) > -1
+          isCurrent = this.currentValue.indexOf(child.formatedDate) > -1
         } else {
           isCurrent = this.currentValue === this.formatDate(this.year, this.month, child)
         }
@@ -407,6 +410,41 @@ export default {
 
       if (this.renderOnValueChange) {
         this.render(null, null)
+      }
+    },
+    selectAllWeek(k1, data) {
+      let _isBetween = false;
+      let _currentValue = [];
+      if (this.multi) {
+        // 第一个日期如果是下个月，那么整行都是下个月，不处理
+        if (data[0].isNextMonth) {
+          return;
+        }
+        // 如果第一个日期相同，说明是同一行，取消选中操作
+        if (this.currentValue.length && this.currentValue[0] === data[0].formatedDate) {
+            // this.currentValue = [];
+            // 目前要求点了当前选中的周，关闭日历
+            this.$emit('on-select-week-change');
+        } else {
+          for (let i = 0, len = data.length; i < len; i++) {
+            _currentValue.push(data[i].formatedDate);
+            if (this.isBetween(data[i].formatedDate)) {
+              _isBetween = true;
+            }
+          }
+          if (_isBetween) {
+            this.currentValue = _currentValue;
+            this.$emit('on-select-week-change');
+            // for (let i = 0; i < this.currentValue.length; i++) {
+            //   this.$set(this.currentValue, i, this.convertDate(this.currentValue[i]))
+            // }
+          }
+        }
+        if (this.renderOnValueChange) {
+          this.render(null, null)
+        }
+      } else {
+        throw('when chooseType is week, the multi must be true');
       }
     },
     showChild (year, month, child) {

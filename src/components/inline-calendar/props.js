@@ -80,5 +80,15 @@ export default () => ({
     default () {
       return []
     }
-  }
+  },
+  chooseType: {
+    type: String,
+    validator (val) {
+      if (val) {
+        return ['week', 'normal', 'month'].indexOf(val) > -1
+      }
+      return true
+    },
+    default: 'normal'
+  },
 })
